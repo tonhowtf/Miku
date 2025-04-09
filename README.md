@@ -1,6 +1,7 @@
 # Miku
 
-![Miku Icon](miku.png) <!-- Substitua o # pelo caminho ou URL do ícone da Miku -->
+![Miku Icon](miku.png){ width=50 height=50 }
+
 
 ## Descrição
 Miku é um bot do Discord de propósito geral, desenvolvido em Java. Ele foi projetado para ser simples, eficiente e altamente personalizável.
