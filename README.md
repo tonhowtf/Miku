@@ -1,6 +1,3 @@
-Crie um arquivo chamado `README.md` e insira o seguinte conteúdo:
-
-```markdown
 # Miku
 
 ![Miku Icon](miku.png) <!-- Substitua o # pelo caminho ou URL do ícone da Miku -->
@@ -42,4 +39,3 @@ Contribuições são bem-vindas! Siga os passos abaixo:
 
 ## Licença
 Este projeto está licenciado sob a [MIT License](LICENSE).
-```
