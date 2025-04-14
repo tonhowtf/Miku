@@ -1,7 +1,7 @@
 # Miku
 
 <div align="center">
-  <img src="miku.png" alt="Miku Icon" style="width:33%;"> 
+  <img src="miku.png" alt="Miku Icon" style="width:66%;"> 
   
 </div>
 
