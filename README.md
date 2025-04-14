@@ -7,7 +7,7 @@
 
 
 ## Descrição
-Miku é um bot do Discord de propósito geral, desenvolvido em Java. Ele foi projetado para ser simples, eficiente e altamente personalizável.
+Miku é um bot do Telegram de propósito geral, desenvolvido em Java. Ele foi projetado para ser simples, eficiente e altamente personalizável.
 
 ## Funcionalidades
 - Comandos úteis para gerenciamento de servidores.
