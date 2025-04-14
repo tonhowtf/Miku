@@ -1,4 +1,4 @@
-# 🤖 Miku - Telegram Bot
+# Miku - Telegram Bot
 
 <div align="center">
   <img src="miku.png" alt="Miku Icon" width="300">
