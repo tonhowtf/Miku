@@ -29,6 +29,8 @@ INSTA_USER = os.getenv('INSTA_USER')
 INSTA_PASS = os.getenv('INSTA_PASS')
 VINTECINCO = os.getenv('CHAT_ID')
 
+L.login(INSTA_USER, INSTA_PASS)
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text('DENILSON PROGRAMAÇÕES!')
 
@@ -92,9 +94,6 @@ async def send_batch(context, profile, media_batch):
     
 def main():
     TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-    
-
-
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stories", stories))
