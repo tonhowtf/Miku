@@ -5,6 +5,9 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 import instaloader
 import asyncio
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
