@@ -8,7 +8,7 @@ import sys
 
 
 subprocess.run(['pip', 'install', '-r', 'requirements.txt'], check=True)
-subprocess.run([sys.executable, '-m', 'django', 'collectstatic', '--noinput'])
+
 
 load_dotenv()
 
@@ -18,6 +18,7 @@ django.setup()
 from django.core.management import call_command
 call_command('migrate', '--noinput')
 
+subprocess.run([sys.executable, '-m', 'django', 'collectstatic', '--noinput'])
 subprocess.run([sys.executable, 'create_user.py'])
 
 def run_django():
