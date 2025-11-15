@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import subprocess
 import time
 import sys
+from threading import Thread
 
 subprocess.run(['pip', 'install', '-r', 'requirements.txt'], check=True)
 
@@ -14,19 +15,14 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
 from django.core.management import call_command
-call_command('collectstatic', '--noinput')
 call_command('migrate', '--noinput')
+call_command('collectstatic', '--noinput')
+
+subprocess.run([sys.executable, 'create_user.py'])
 
 def run_django():
-    import subprocess
-    subprocess.run([
-        sys.executable,
-        '-m'
-        'daphne',
-        '-b', '0.0.0.0',
-        '-p', '80',
-        'config.asgi:application'
-    ])
+    from django.core.management import execute_from_command_line
+    execute_from_command_line(['manage.py', 'runserver', '0.0.0.0:80', '--noreload'])
 
 if __name__ == '__main__':
     django_thread = Thread(target=run_django, daemon=True)
