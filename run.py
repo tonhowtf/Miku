@@ -2,6 +2,8 @@ import os
 import django
 from threading import Thread
 from dotenv import load_dotenv
+import subprocess
+import time
 
 load_dotenv()
 
@@ -12,9 +14,16 @@ from django.core.management import call_command
 call_command('collectstatic', '--noinput')
 call_command('migrate', '--noinput')
 
-def run_bot():
-    from bot.bot import main
-    main()
+def run_django():
+    subprocess.run([
+        'gunicorn',
+        'config.wsgi:application',
+        '--bind', '0.0.0.0:80',
+        '--workers', '1',
+        '--timeout', '120',
+        '--access-logfile', '-',
+        '--error-logfile', '-'
+    ])
 
 def run_django():
     from django.core.management import execute_from_command_line
@@ -24,7 +33,6 @@ if __name__ == '__main__':
     django_thread = Thread(target=run_django, daemon=True)
     django_thread.start()
 
-    import time
     time.sleep(15)
 
     from bot.bot import main
