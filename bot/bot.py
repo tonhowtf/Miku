@@ -74,7 +74,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         download_dir = Path(target)
         all_files = list(download_dir.glob('*'))
 
-        media_files = [f for f in media_files if f.suffix.lower() in ['.jpg', '.jpeg', '.png', '.mp4']]
+        media_files = sorted([f for f in all_files if f.suffix.lower() in ['.jpg', '.jpeg', '.png', '.mp4']], key=lambda x: x.stat().st_mtime)
+
 
         if not media_files:
             return
