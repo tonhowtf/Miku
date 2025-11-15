@@ -6,11 +6,20 @@ import instaloader
 import asyncio
 from pathlib import Path
 from dotenv import load_dotenv
+import logging
+
 
 load_dotenv()
 
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
+
 
 from bot.models import Profile, StoryPersistance
 
@@ -23,8 +32,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def stories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     profiles = Profile.objects.filter(active=True)
 
+    logger.info(f"Fetching stories for {len(profiles)} profiles.")
+
     for profile in profiles:
         try:
+            logger.info(f"Processing profile: {profile.username}")
             insta_profile = instaloader.Profile.from_username(L.context, profile.username)
             batch = []
 
@@ -74,10 +86,14 @@ async def send_batch(context, profile, media_batch):
     
 def main():
     TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-    app = Application.builder().token(TOKEN).build()
+    
 
+
+    app = Application.builder().token(TOKEN).build()
+    CHAT_ID = os.getenv('CHAT_ID')
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stories", stories))
+    logger.info("Bot started. Listening for commands...")
 
     app.run_polling()
 
