@@ -25,8 +25,6 @@ def run_django():
         '--error-logfile', '-'
     ])
 
-
-
 if __name__ == '__main__':
     django_thread = Thread(target=run_django, daemon=True)
     django_thread.start()
