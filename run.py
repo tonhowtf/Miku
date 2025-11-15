@@ -21,8 +21,7 @@ call_command('collectstatic', '--noinput')
 subprocess.run([sys.executable, 'create_user.py'])
 
 def run_django():
-    from django.core.management import execute_from_command_line
-    execute_from_command_line(['manage.py', 'runserver', '0.0.0.0:80', '--noreload'])
+    os.system("gunicorn config.wsgi:application --bind 0.0.0.0:80")
 
 if __name__ == '__main__':
     django_thread = Thread(target=run_django, daemon=True)
