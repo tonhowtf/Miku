@@ -31,10 +31,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = [
-    'https://vintecinco.squareweb.app',
-    'https://*.squareweb.app',
-]
+CSRF_TRUSTED_ORIGINS = ['*']
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400 
