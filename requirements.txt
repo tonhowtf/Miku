@@ -4,4 +4,3 @@ instaloader
 python-dotenv
 asgiref
 whitenoise
-gunicorn

@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import subprocess
 import time
 import sys
-from threading import Thread
+
 
 subprocess.run(['pip', 'install', '-r', 'requirements.txt'], check=True)
 subprocess.run([sys.executable, '-m', 'django', 'collectstatic', '--noinput'])
@@ -20,20 +20,18 @@ call_command('migrate', '--noinput')
 
 subprocess.run([sys.executable, 'create_user.py'])
 
+def run_django():
+    from django.core.management import execute_from_command_line
+    execute_from_command_line(["manage.py", "runserver", "0.0.0.0:80", "--noreload"])
+
 def run_bot():
     from bot.bot import main
     main()
 
-if __name__ == '__main__':
-    bot_thread = Thread(target=run_bot, daemon=True)
-    bot_thread.start()
+if __name__ == "__main__":
+    django_thread = Thread(target=run_django, daemon=True)
+    django_thread.start()
 
     time.sleep(3)
 
-    gunicorn_path = "/application/.local/bin/gunicorn"
-    subprocess.run([
-        gunicorn_path,
-        "config.wsgi:application",
-        "--bind", "0.0.0.0:80",
-        "--log-level", "info"
-    ])
+    run_bot()
