@@ -8,6 +8,7 @@ import sys
 from threading import Thread
 
 subprocess.run(['pip', 'install', '-r', 'requirements.txt'], check=True)
+subprocess.run([sys.executable, '-m', 'django', 'collectstatic', '--noinput'])
 
 load_dotenv()
 
@@ -16,13 +17,12 @@ django.setup()
 
 from django.core.management import call_command
 call_command('migrate', '--noinput')
-call_command('collectstatic', '--noinput')
 
 subprocess.run([sys.executable, 'create_user.py'])
 
 def run_django():
     gunicorn_path = "/application/.local/bin/gunicorn"
-    
+
     subprocess.run([
         gunicorn_path,
         "config.wsgi:application",
