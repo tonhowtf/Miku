@@ -50,7 +50,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = update.message.text
 
-    insta_pattern = r'https?://(?:www\.)?instagram\.com/(?:p|reel)/([A-Za-z0-9_-]+)'
+    insta_pattern = r"https?://(?:www\.)?instagram\.com/(?:p|reel|tv)/([^/?#&]+)"
     match = re.search(insta_pattern, text)
 
     if not match:
