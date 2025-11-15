@@ -8,6 +8,10 @@ load_dotenv()
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
+from django.core.management import call_command
+call_command('collectstatic', '--noinput')
+call_command('migrate', '--noinput')
+
 def run_bot():
     from bot.bot import main
     main()
