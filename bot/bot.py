@@ -1,13 +1,14 @@
 import os
 import django
 from telegram import Update, InputMediaPhoto, InputMediaVideo
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import instaloader
 import asyncio
 from pathlib import Path
 from dotenv import load_dotenv
 import logging
 from asgiref.sync import sync_to_async
+import re
 
 
 load_dotenv()
@@ -33,6 +34,85 @@ L.login(INSTA_USER, INSTA_PASS)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text('DENILSON PROGRAMAÇÕES!')
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    text = update.message.text
+
+    insta_pattern = r'https?://(?:www\.)?instagram\.com/(?:p|reel)/([A-Za-z0-9_-]+)'
+    match = re.search(insta_pattern, text)
+
+    if not match:
+        return
+    shortcode = match.group(1)
+    logger.info(f'Received Instagram link with shortcode: {shortcode}')
+
+    try:
+        post = instaloader.Post.from_shortcode(L.context, shortcode)
+        caption = post.caption or "No caption"
+        if len(caption) > 1024:
+            caption = caption[:1021] + '...'
+        
+        safe_shortcode = re.sub(r'[^\w\-_.]', '_', shortcode)
+        target = f"downloads/{safe_shortcode}"
+        Path(target).mkdir(parents=True, exist_ok=True)
+        L.dirname_pattern = target
+        L.filename_pattern = "{date_utc}_{shortcode}"
+        L.download_post(post, target=target)
+
+        download_dir = Path(target)
+        all_files = list(download_dir.glob('*'))
+
+        media_files = [f for f in media_files if f.suffix.lower() in ['.jpg', '.jpeg', '.png', '.mp4']]
+
+        if not media_files:
+            return
+
+        if len(media_files) == 1:
+            file = media_files[0]
+
+
+            with open(file, 'rb') as f:
+                if file.suffix.lower() == '.mp4':
+                    await context.bot.send_video(
+                        chat_id=VINTECINCO,
+                        video=f,
+                        caption=caption
+                    )
+                else:
+                    await context.bot.send_photo(
+                        chat_id=VINTECINCO,
+                        photo=f,
+                        caption=caption
+                    )
+        else:
+            media_group = []
+            for i, file in enumerate(media_files[:10]):
+                with open(file, 'rb') as f:
+                    if file.suffix.lower() == '.mp4':
+                        media = InputMediaVideo(
+                            media=f.read(),
+                            caption=caption if i == 0 else None
+                        )
+                    else:
+                        media = InputMediaPhoto(
+                            media=f.read(),
+                            caption=caption if i == 0 else None
+                        )
+                    
+                    media_group.append(media)
+
+            await context.bot.send_media_group(chat_id=VINTECINCO, media=media_group)
+        
+        for file in all_files:
+            file.unlink()
+        download_dir.rmdir()
+
+    except Exception as e:
+        logger.error(f'Error processing Instagram link: {str(e)}')
+        await update.message.reply_text(f'Error processing the Instagram link: {str(e)}')
+
+        
+                
 
 async def stories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     profiles = await sync_to_async(list)(Profile.objects.filter(active=True))
@@ -97,6 +177,8 @@ def main():
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stories", stories))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    
     logger.info("Bot started. Listening for commands...")
 
     app.run_polling()
