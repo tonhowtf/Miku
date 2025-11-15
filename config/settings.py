@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 """
 Django settings for config project.
 
@@ -25,7 +28,7 @@ SECRET_KEY = 'django-insecure-d^66=)d)@lu2i79dmpie!&%2ij4-o)!_w@hd99awkc)3u=441w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -116,6 +119,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
