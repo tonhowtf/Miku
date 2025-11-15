@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import subprocess
 import time
 
+subprocess.run(['pip', 'install', '-r', 'requirements.txt'], check=True)
+
 load_dotenv()
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
@@ -15,14 +17,12 @@ call_command('collectstatic', '--noinput')
 call_command('migrate', '--noinput')
 
 def run_django():
+    import subprocess
     subprocess.run([
-        'gunicorn',
-        'config.wsgi:application',
-        '--bind', '0.0.0.0:80',
-        '--workers', '1',
-        '--timeout', '120',
-        '--access-logfile', '-',
-        '--error-logfile', '-'
+        'daphne',
+        '-b', '0.0.0.0',
+        '-p', '80',
+        'config.asgi:application'
     ])
 
 if __name__ == '__main__':
