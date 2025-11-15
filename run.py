@@ -21,7 +21,16 @@ call_command('collectstatic', '--noinput')
 subprocess.run([sys.executable, 'create_user.py'])
 
 def run_django():
-    os.system("gunicorn config.wsgi:application --bind 0.0.0.0:80")
+    gunicorn_path = "/application/.local/bin/gunicorn"
+    
+    subprocess.run([
+        gunicorn_path,
+        "config.wsgi:application",
+        "--bind",
+        "0.0.0.0:80",
+        "--log-level",
+        "info"
+    ])
 
 if __name__ == '__main__':
     django_thread = Thread(target=run_django, daemon=True)
