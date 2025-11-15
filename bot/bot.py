@@ -7,6 +7,7 @@ import asyncio
 from pathlib import Path
 from dotenv import load_dotenv
 import logging
+from asgiref.sync import sync_to_async
 
 
 load_dotenv()
@@ -30,7 +31,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text('DENILSON PROGRAMAÇÕES!')
 
 async def stories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    profiles = Profile.objects.filter(active=True)
+    profiles = await sync_to_async(list)(Profile.objects.filter(active=True))
 
     logger.info(f"Fetching stories for {len(profiles)} profiles.")
 
@@ -44,7 +45,8 @@ async def stories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 for item in story.get_items():
                     url = item.url
 
-                    if StoryPersistance.objects.filter(url=url).exists():
+                    exists = await sync_to_async(StoryPersistance.objects.filter(url=url).exists)()
+                    if exists:
                         continue
 
                     target = f'stories/{profile.username}'
@@ -76,9 +78,11 @@ async def send_batch(context, profile, media_batch):
         await context.bot.send_media_group(chat_id=VINTECINCO, media=media_group)
 
         for _, url, file_path in media_batch:
-            StoryPersistance.objects.create(url=url, profile=profile)
+            await sync_to_async(StoryPersistance.objects.create)(url=url, profile=profile)
             os.remove(file_path)
+            logger.info(f'Processed and sent story: {url}')
     except Exception as e:
+        logger.error(f'Error sending media group: {str(e)}')
         for m in media_batch:
             m[0].media.close()
         raise e
