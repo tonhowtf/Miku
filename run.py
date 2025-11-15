@@ -21,7 +21,12 @@ def run_django():
     execute_from_command_line(['manage.py', 'runserver', '0.0.0.0:80'])
 
 if __name__ == '__main__':
-    bot_thread = Thread(target=run_bot, daemon=True)
-    bot_thread.start()
+    django_thread = Thread(target=run_django, daemon=True)
+    django_thread.start()
+
+    import time
+    time.sleep(15)
+
+    from bot.bot import main
     
-    run_django()
+    main()
