@@ -24,7 +24,6 @@ async def stories(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         try:
             insta_profile = instaloader.Profile.from_username(L.context, profile.username)
             batch = []
-            files_to_delete = []
 
             for story in L.get_stories(userids=[insta_profile.userid]):
                 for item in story.get_items():
@@ -78,6 +77,6 @@ def main():
     app.add_handler(CommandHandler("stories", stories))
 
     app.run_polling()
-    
+
 if __name__ == '__main__':
     main()
