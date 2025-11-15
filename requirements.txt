@@ -3,5 +3,5 @@ python-telegram-bot>=20.0
 instaloader
 python-dotenv
 asgiref
-gunicorn
+daphne
 whitenoise
