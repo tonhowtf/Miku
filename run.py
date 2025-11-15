@@ -4,6 +4,7 @@ from threading import Thread
 from dotenv import load_dotenv
 import subprocess
 import time
+import sys
 
 subprocess.run(['pip', 'install', '-r', 'requirements.txt'], check=True)
 
@@ -19,6 +20,8 @@ call_command('migrate', '--noinput')
 def run_django():
     import subprocess
     subprocess.run([
+        sys.executable,
+        '-m'
         'daphne',
         '-b', '0.0.0.0',
         '-p', '80',
