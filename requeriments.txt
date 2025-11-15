@@ -1,3 +1,5 @@
 django>=4.2
 python-telegram-bot>=20.0
 instaloader
+python-dotenv
+asgiref
