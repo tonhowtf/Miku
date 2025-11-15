@@ -25,6 +25,8 @@ django.setup()
 from bot.models import Profile, StoryPersistance
 
 L = instaloader.Instaloader()
+INSTA_USER = os.getenv('INSTA_USER')
+INSTA_PASS = os.getenv('INSTA_PASS')
 VINTECINCO = os.getenv('CHAT_ID')
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -94,7 +96,6 @@ def main():
 
 
     app = Application.builder().token(TOKEN).build()
-    CHAT_ID = os.getenv('CHAT_ID')
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stories", stories))
     logger.info("Bot started. Listening for commands...")
