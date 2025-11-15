@@ -25,12 +25,23 @@ django.setup()
 
 from bot.models import Profile, StoryPersistance
 
+if not os.path.exists('stories'):
+    os.makedirs('stories')
+if not os.path.exists('downloads'):
+    os.makedirs('downloads')
+
 L = instaloader.Instaloader()
 INSTA_USER = os.getenv('INSTA_USER')
 INSTA_PASS = os.getenv('INSTA_PASS')
 VINTECINCO = os.getenv('CHAT_ID')
 
-L.login(INSTA_USER, INSTA_PASS)
+try:
+    L.load_session_from_file(INSTA_USER)
+
+except FileNotFoundError:
+    L.login(INSTA_USER, INSTA_PASS)
+    L.save_session_to_file()
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text('DENILSON PROGRAMAÇÕES!')
