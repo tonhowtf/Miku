@@ -78,3 +78,6 @@ def main():
     app.add_handler(CommandHandler("stories", stories))
 
     app.run_polling()
+    
+if __name__ == '__main__':
+    main()
