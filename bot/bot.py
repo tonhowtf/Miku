@@ -68,48 +68,65 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     except (ValueError, IndexError):
         await update.message.reply_text('/summary <n_messages>')
         return
-    
+
     try:
         chat_id = update.effective_chat.id
+        current_msg_id = update.message.message_id
+        messages = []
         
-        msgs = await sync_to_async(list)(
-            ChatMessage.objects.filter(chat_id=chat_id)
-            .order_by('-timestamp')[:k_messages]
-        )
+        for i in range(1, k_messages + 1):
+            try:
+                msg_id = current_msg_id - i
+                
+                msg = await context.bot.forward_message(
+                    chat_id=chat_id,
+                    from_chat_id=chat_id,
+                    message_id=msg_id
+                )
+                
+                await context.bot.delete_message(chat_id=chat_id, message_id=msg.message_id)
+                
+                content = []
+                
+                if msg.text:
+                    username = msg.from_user.first_name if msg.from_user else "Usuario"
+                    content.append({
+                        "type": "text",
+                        "text": f"[{username}]: {msg.text}"
+                    })
+                
+                if msg.photo:
+                    photo = msg.photo[-1]
+                    file = await context.bot.get_file(photo.file_id)
+                    content.append({
+                        "type": "image_url",
+                        "image_url": {"url": file.file_path}
+                    })
+                    
+                    if msg.caption:
+                        content.append({
+                            "type": "text",
+                            "text": f"[Legenda]: {msg.caption}"
+                        })
+                
+                if content:
+                    messages.append(content)
+                    
+            except Exception:
+                continue
         
-        if not msgs:
+        if not messages:
             return
         
-        msgs.reverse()
+        messages.reverse()
         
         prompt_messages = [{
             "role": "system",
             "content": "Você analisa conversas e faz resumos concisos focados em: assuntos principais, decisões e próximos passos. Seja amigável."
         }]
         
-        for msg in msgs:
-            content = []
-            
-            if msg.text:
-                content.append({
-                    "type": "text",
-                    "text": f"[{msg.username}]: {msg.text}"
-                })
-            
-            if msg.photo_url:
-                content.append({
-                    "type": "image_url",
-                    "image_url": {"url": msg.photo_url}
-                })
-                
-                if msg.caption:
-                    content.append({
-                        "type": "text",
-                        "text": f"[Legenda]: {msg.caption}"
-                    })
-            
-            if content:
-                prompt_messages.append({"role": "user", "content": content})
+        for msg_content in messages:
+            prompt_messages.append({"role": "user", "content": msg_content})
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -120,11 +137,10 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         summary_text = response.choices[0].message.content
         await update.message.reply_text(
-            f"📝 **Resumo de {len(msgs)} mensagens:**\n\n{summary_text}",
+            f"📝 Resumo de {len(messages)} mensagens:\n\n{summary_text}"
         )
 
     except Exception as e:
-        logger.error(f"Error generating summary: {str(e)}")
         await update.message.reply_text(f"❌ Erro: {str(e)}")
         
             
