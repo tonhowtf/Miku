@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 import logging
 from asgiref.sync import sync_to_async
 import re
+from openai import OpenAI
 
 
 load_dotenv()
@@ -24,6 +25,96 @@ django.setup()
 
 
 from bot.models import Profile, StoryPersistance
+
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    try:
+        k_messages = int(context.args[0]) if context.args else 10
+        k_messages = min(k_messages, 150)
+    except (ValueError, IndexError):
+        await update.message.reply_text(';-; é /summary <n_messages>, boy')
+        return
+    
+    try:
+        chat_id = update.effective_chat.id
+        messages = []
+
+        async for msg in context.bot.iter_history(chat_id, limit=k_messages):
+            content = []
+
+            if msg.text:
+                content.append({
+                    "type": "text",
+                    "text": f"[{msg.from_user.first_name}]: {msg.text}"
+                })
+            if msg.photo:
+                photo = msg.photo[-1]
+                file = await context.bot.get_file(photo.file_id)
+                file_url = file.file_path
+
+                content.append({
+                    "type": "image_url",
+                    "text": f"[ {msg.from_user.first_name} mandou uma imagem com a [Legenda]: {file_url}"
+                })
+
+                if msg.caption:
+                    content.append({
+                        "type": "text",
+                        "text": f"[Legenda]: {msg.caption}"
+                    })
+                
+                if content:
+                    messages.append(content)
+                
+            messages.reverse()
+
+            prompt_messages = [
+            {
+            "role": "system",
+            "content": "Você é um assistente que analisa uma sequência de mensagens (texto e imagens) trocadas entre amigos e produz **um resumo conciso**, focado em: 1) quem falou o quê, 2) principais assuntos tratados, 3) decisões ou acordos feitos, e 4) itens pendentes ou próximos passos. Use um tom amistoso, formato fácil de ler (por exemplo: parágrafos curtos ou bullet-points) e evite incluir detalhes irrelevantes ou repetitivos."
+            }
+                    ]
+            
+
+            for msg_content in messages:
+                prompt_messages.append({
+                    "role": "user",
+                    "content": msg_content
+                })
+            prompt_messages.append({
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Resuma esta conversa de forma clara e organizada. Se houver imagens, descreva seu contexto."
+                }
+            ]
+        })
+            
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=prompt_messages,
+                max_tokens=500,
+                temperature=0.7,
+            )
+
+            summary = response.choices[0].message.content
+
+            await update.message.reply_text(f"Resumo das últimas {k_messages} mensagens:\n\n{summary}", parse_mode='Markdown')
+
+            logger.info(f"Generated summary for chat {chat_id}")
+
+    except Exception as e:
+        logger.error(f"Error generating summary: {str(e)}")
+        await update.message.reply_text(f"Erro ao gerar resumo: {str(e)}")
+        
+            
+
+
+
+
+
 
 if not os.path.exists('stories'):
     os.makedirs('stories')
