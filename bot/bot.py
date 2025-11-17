@@ -33,88 +33,104 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         k_messages = int(context.args[0]) if context.args else 10
         k_messages = min(k_messages, 150)
     except (ValueError, IndexError):
-        await update.message.reply_text(';-; é /summary <n_messages>, boy')
+        await update.message.reply_text('/summary <n_messages>')
         return
     
     try:
         chat_id = update.effective_chat.id
+        message_id = update.message.message_id
         messages = []
 
-        async for msg in context.bot.iter_history(chat_id, limit=k_messages):
-            content = []
+        current_id = message_id
+        for _ in range(k_messages):
+            try:
+                current_id -= 1
+                msg = await context.bot.forward_message(
+                    chat_id=chat_id,
+                    from_chat_id=chat_id,
+                    message_id=current_id
+                )
 
-            if msg.text:
-                content.append({
-                    "type": "text",
-                    "text": f"[{msg.from_user.first_name}]: {msg.text}"
-                })
-            if msg.photo:
-                photo = msg.photo[-1]
-                file = await context.bot.get_file(photo.file_id)
-                file_url = file.file_path
+                await context.bot.delete_message(chat_id=chat_id, message_id=msg.message_id)
+                
+                content = []
 
-                content.append({
-                    "type": "image_url",
-                    "text": f"[ {msg.from_user.first_name} mandou uma imagem com a [Legenda]: {file_url}"
-                })
-
-                if msg.caption:
+                original = await context.bot.get_chat(chat_id)
+                
+                if msg.text:
                     content.append({
                         "type": "text",
-                        "text": f"[Legenda]: {msg.caption}"
+                        "text": f"[Usuário]: {msg.text}"
                     })
+                
+                if msg.photo:
+                    photo = msg.photo[-1]
+                    file = await context.bot.get_file(photo.file_id)
+                    file_url = file.file_path
+                    
+                    content.append({
+                        "type": "image_url",
+                        "image_url": {"url": file_url}
+                    })
+                    
+                    if msg.caption:
+                        content.append({
+                            "type": "text",
+                            "text": f"[Legenda]: {msg.caption}"
+                        })
                 
                 if content:
                     messages.append(content)
+                    
+            except Exception as e:
+                continue
                 
-            messages.reverse()
+        messages.reverse()
 
-            prompt_messages = [
+        prompt_messages = [
             {
             "role": "system",
             "content": "Você é um assistente que analisa uma sequência de mensagens (texto e imagens) trocadas entre amigos e produz **um resumo conciso**, focado em: 1) quem falou o quê, 2) principais assuntos tratados, 3) decisões ou acordos feitos, e 4) itens pendentes ou próximos passos. Use um tom amistoso, formato fácil de ler (por exemplo: parágrafos curtos ou bullet-points) e evite incluir detalhes irrelevantes ou repetitivos."
             }
-                    ]
+                ]
             
 
-            for msg_content in messages:
-                prompt_messages.append({
-                    "role": "user",
-                    "content": msg_content
-                })
+        for msg_content in messages:
             prompt_messages.append({
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "Resuma esta conversa de forma clara e organizada. Se houver imagens, descreva seu contexto."
-                }
+                "role": "user",
+                "content": msg_content
+            })
+
+
+        prompt_messages.append({
+        "role": "user",
+        "content": [
+            {
+                "type": "text",
+                "content": "Resuma esta conversa de forma clara. Se houver imagens, mencione brevemente."
+
+            }
             ]
         })
             
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=prompt_messages,
-                max_tokens=500,
-                temperature=0.7,
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=prompt_messages,
+            max_tokens=500,
+            temperature=0.7,
             )
 
-            summary = response.choices[0].message.content
+        summary = response.choices[0].message.content
 
-            await update.message.reply_text(f"Resumo das últimas {k_messages} mensagens:\n\n{summary}", parse_mode='Markdown')
+        await update.message.reply_text(f"Resumo das últimas {k_messages} mensagens:\n\n{summary}", parse_mode='Markdown')
 
-            logger.info(f"Generated summary for chat {chat_id}")
+        logger.info(f"Generated summary for chat {chat_id}")
 
     except Exception as e:
         logger.error(f"Error generating summary: {str(e)}")
         await update.message.reply_text(f"Erro ao gerar resumo: {str(e)}")
         
             
-
-
-
-
-
 
 if not os.path.exists('stories'):
     os.makedirs('stories')
