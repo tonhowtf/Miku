@@ -134,17 +134,16 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     base64.b64decode(clean_b64)
 
                     content.append({
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{clean_b64}",
-                            "detail": "low"
-                        }
+                        "type": "input_image",
+                        "image_url": f"data:image/jpeg;base64,{clean_b64}"
                     })
+                        
                 except Exception as e:
                     logger.error(f"Error processing photo for summary: {str(e)}")
+
                     content.append({
-                        "type": "text",
-                        "text": f"[{msg.username} enviou uma imagem]"
+                        "type": "input_text",
+                        "text": f"[Legenda]: {msg.caption}"
                     })
                 
                 if msg.caption:
