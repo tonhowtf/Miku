@@ -123,23 +123,37 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
             if msg.photo_url:
                 try:
-                    clean_b64 = msg.photo_url
-        
+                    clean_b64 = msg.photo_url.strip()
+                    
+                    clean_b64 = re.sub(r'[^A-Za-z0-9+/=]', '', clean_b64)
+                    
                     padding = len(clean_b64) % 4
                     if padding:
                         clean_b64 += '=' * (4 - padding)
                     
-                    base64.b64decode(clean_b64)
+                    decoded = base64.b64decode(clean_b64)
+                    
+                    img = Image.open(io.BytesIO(decoded))
+                    img = img.convert('RGB')
+                    
+                    buffer = io.BytesIO()
+                    img.save(buffer, format='JPEG', quality=85)
+                    final_b64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
                     content.append({
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/jpeg;base64,{clean_b64}"
+                            "url": f"data:image/jpeg;base64,{final_b64}",
+                            "detail": "low"
                         }
                     })
                         
                 except Exception as e:
-                    logger.error(f"Error processing photo for summary: {str(e)}")
+                    logger.error(f"Erro imagem: {str(e)}")
+                    content.append({
+                        "type": "text",
+                        "text": f"[{msg.username} enviou uma imagem]"
+                    })
 
                     content.append({
                         "type": "text",
