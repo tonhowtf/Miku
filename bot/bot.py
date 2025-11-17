@@ -293,12 +293,13 @@ def main():
     TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
     app = Application.builder().token(TOKEN).build()
 
-    app.add_handler(MessageHandler(filters.ALL, save_message), group=0)
     
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stories", stories))
     app.add_handler(CommandHandler("summary", summary))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_handler(MessageHandler(filters.ALL, save_message), group=1)
     
     logger.info("Bot started. Listening for commands...")
 
