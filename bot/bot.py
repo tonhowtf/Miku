@@ -143,7 +143,7 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         summary_text = response.choices[0].message.content
         await update.message.reply_text(
-            f"📝 **Resumo de {len(msgs)} mensagens:**\n\n{summary_text}",
+            f"📝 **Resumo de {len(msgs)} mensagens:**\n\n{summary_text}", parse_mode='Markdown'
         )
 
     except Exception as e:
