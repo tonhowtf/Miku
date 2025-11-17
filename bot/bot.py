@@ -42,7 +42,7 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
     
     try:
-        photo_url = None
+        photo_base64 = None
         if msg.photo:
             photo = msg.photo[-1]
             file = await context.bot.get_file(photo.file_id)
@@ -114,8 +114,8 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
             if msg.photo_url:
                 content.append({
-                    "type": "text",
-                    "image_url": {"url": msg.photo_url}
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{msg.photo_url}"}
                 })
                 
                 if msg.caption:
@@ -146,7 +146,7 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         summary_text = response.choices[0].message.content
         await update.message.reply_text(
-            f"mensagens: \n\n{summary_text}", parse_mode='Markdown'
+            summary_text, parse_mode='Markdown'
         )
 
     except Exception as e:
