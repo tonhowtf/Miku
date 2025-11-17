@@ -114,8 +114,13 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
             if msg.photo_url:
                 try:
-                    import re
-                    clean_b64 = re.sub(r'[^A-Za-z0-9+/=]', '', msg.photo_url)
+                    clean_b64 = msg.photo_url.strip()
+
+                    padding = len(clean_b64) % 4
+                    if padding:
+                        clean_b64 += '=' * (4 - padding)
+                    
+                    base64.b64decode(clean_b64)
 
                     content.append({
                         "type": "image_url",
@@ -128,7 +133,7 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     logger.error(f"Error processing photo for summary: {str(e)}")
                     content.append({
                         "type": "text",
-                        "text": f"[{msg.username}]: [Erro ao carregar imagem]"
+                        "text": f"[{msg.username} enviou uma imagem]"
                     })
                 
                 if msg.caption:
