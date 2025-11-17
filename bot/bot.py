@@ -45,23 +45,18 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     
     try:
         photo_base64 = None
-        photo_format = None
 
         if msg.photo:
             photo = msg.photo[-1]
             file = await context.bot.get_file(photo.file_id)
-
             photo_bytes = await file.download_as_bytearray() 
             
             img = Image.open(io.BytesIO(photo_bytes))
-            photo_format = img.format.lower()
-
-            if photo_format not in ['png', 'jpeg', 'jpg', 'webp', 'gif']:
-                img = img.convert('RGB')
-                buffer = io.BytesIO()
-                img.save(buffer, format='JPEG')
-                photo_bytes = buffer.getvalue()
-                photo_format = 'jpeg'
+            img = img.convert('RGB')
+            
+            buffer = io.BytesIO()
+            img.save(buffer, format='JPEG')
+            photo_bytes = buffer.getvalue()
             
             photo_base64 = base64.b64encode(photo_bytes).decode('utf-8')
 
