@@ -24,9 +24,37 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
 
-from bot.models import Profile, StoryPersistance
+from bot.models import Profile, StoryPersistance, ChatMessage
 
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+
+async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    msg = update.message
+    
+    if not msg:
+        return
+    
+    try:
+        photo_url = None
+        if msg.photo:
+            photo = msg.photo[-1]
+            file = await context.bot.get_file(photo.file_id)
+            photo_url = file.file_path
+        
+        await sync_to_async(ChatMessage.objects.update_or_create)(
+            chat_id=msg.chat_id,
+            message_id=msg.message_id,
+            defaults={
+                'user_id': msg.from_user.id,
+                'username': msg.from_user.first_name,
+                'text': msg.text,
+                'photo_url': photo_url,
+                'caption': msg.caption
+            }
+        )
+    except Exception as e:
+        logger.debug(f'Erro ao salvar mensagem: {str(e)}')
 
 async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
@@ -36,99 +64,69 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text('/summary <n_messages>')
         return
     
+    await update.message.reply_text(f'📖 Analisando {k_messages} mensagens...')
+    
     try:
         chat_id = update.effective_chat.id
-        message_id = update.message.message_id
-        messages = []
-
-        current_id = message_id
-        for _ in range(k_messages):
-            try:
-                current_id -= 1
-                msg = await context.bot.forward_message(
-                    chat_id=chat_id,
-                    from_chat_id=chat_id,
-                    message_id=current_id
-                )
-
-                await context.bot.delete_message(chat_id=chat_id, message_id=msg.message_id)
+        
+        msgs = await sync_to_async(list)(
+            ChatMessage.objects.filter(chat_id=chat_id)
+            .order_by('-timestamp')[:k_messages]
+        )
+        
+        if not msgs:
+            await update.message.reply_text('❌ Nenhuma mensagem no histórico')
+            return
+        
+        msgs.reverse()
+        
+        prompt_messages = [{
+            "role": "system",
+            "content": "Você analisa conversas e faz resumos concisos focados em: assuntos principais, decisões e próximos passos. Seja amigável."
+        }]
+        
+        for msg in msgs:
+            content = []
+            
+            if msg.text:
+                content.append({
+                    "type": "text",
+                    "text": f"[{msg.username}]: {msg.text}"
+                })
+            
+            if msg.photo_url:
+                content.append({
+                    "type": "image_url",
+                    "image_url": {"url": msg.photo_url}
+                })
                 
-                content = []
-
-                original = await context.bot.get_chat(chat_id)
-                
-                if msg.text:
+                if msg.caption:
                     content.append({
                         "type": "text",
-                        "text": f"[Usuário]: {msg.text}"
+                        "text": f"[Legenda]: {msg.caption}"
                     })
-                
-                if msg.photo:
-                    photo = msg.photo[-1]
-                    file = await context.bot.get_file(photo.file_id)
-                    file_url = file.file_path
-                    
-                    content.append({
-                        "type": "image_url",
-                        "image_url": {"url": file_url}
-                    })
-                    
-                    if msg.caption:
-                        content.append({
-                            "type": "text",
-                            "text": f"[Legenda]: {msg.caption}"
-                        })
-                
-                if content:
-                    messages.append(content)
-                    
-            except Exception as e:
-                continue
-                
-        messages.reverse()
-
-        prompt_messages = [
-            {
-            "role": "system",
-            "content": "Você é um assistente que analisa uma sequência de mensagens (texto e imagens) trocadas entre amigos e produz **um resumo conciso**, focado em: 1) quem falou o quê, 2) principais assuntos tratados, 3) decisões ou acordos feitos, e 4) itens pendentes ou próximos passos. Use um tom amistoso, formato fácil de ler (por exemplo: parágrafos curtos ou bullet-points) e evite incluir detalhes irrelevantes ou repetitivos."
-            }
-                ]
             
-
-        for msg_content in messages:
-            prompt_messages.append({
-                "role": "user",
-                "content": msg_content
-            })
-
-
-        prompt_messages.append({
-        "role": "user",
-        "content": [
-            {
-                "type": "text",
-                "content": "Resuma esta conversa de forma clara. Se houver imagens, mencione brevemente."
-
-            }
-            ]
-        })
-            
+            if content:
+                prompt_messages.append({"role": "user", "content": content})
+        
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=prompt_messages,
             max_tokens=500,
-            temperature=0.7,
-            )
+            temperature=0.7
+        )
 
-        summary = response.choices[0].message.content
-
-        await update.message.reply_text(f"Resumo das últimas {k_messages} mensagens:\n\n{summary}", parse_mode='Markdown')
-
-        logger.info(f"Generated summary for chat {chat_id}")
+        summary_text = response.choices[0].message.content
+        await update.message.reply_text(
+            f"📝 **Resumo de {len(msgs)} mensagens:**\n\n{summary_text}",
+            parse_mode='Markdown'
+        )
+        
+        logger.info(f"✅ Resumo gerado")
 
     except Exception as e:
-        logger.error(f"Error generating summary: {str(e)}")
-        await update.message.reply_text(f"Erro ao gerar resumo: {str(e)}")
+        logger.error(f"❌ Erro: {str(e)}")
+        await update.message.reply_text(f"❌ Erro: {str(e)}")
         
             
 
@@ -299,6 +297,7 @@ def main():
     app.add_handler(CommandHandler("stories", stories))
     app.add_handler(CommandHandler("summary", summary))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_handler(MessageHandler(filters.ALL, save_message), group=1)
     
     logger.info("Bot started. Listening for commands...")
 
