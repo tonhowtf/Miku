@@ -134,7 +134,7 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     base64.b64decode(clean_b64)
 
                     content.append({
-                        "type": "input_image",
+                        "type": "image_url",
                         "image_url": f"data:image/jpeg;base64,{clean_b64}"
                     })
                         
@@ -142,7 +142,7 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     logger.error(f"Error processing photo for summary: {str(e)}")
 
                     content.append({
-                        "type": "input_text",
+                        "type": "text",
                         "text": f"[Legenda]: {msg.caption}"
                     })
                 
