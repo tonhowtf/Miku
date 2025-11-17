@@ -136,6 +136,9 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     else:
                         img_format = 'jpeg'
                         clean_b64 = msg.photo_url
+                    
+                    if img_format == 'jpg':
+                        img_format = 'jpeg'
 
                     clean_b64 = clean_b64.strip()
                     padding = len(clean_b64) % 4
