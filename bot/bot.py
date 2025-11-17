@@ -27,12 +27,17 @@ django.setup()
 from bot.models import Profile, StoryPersistance, ChatMessage
 
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+BOT_ID = int(BOT_TOKEN.split(':')[0])
 
 
 async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg = update.message
     
-    if not msg:
+    if not msg or not msg.from_user:
+        return
+    
+    if msg.from_user.id == BOT_ID:
         return
     
     try:
@@ -54,7 +59,7 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             }
         )
     except Exception as e:
-        logger.debug(f'Erro ao salvar mensagem: {str(e)}')
+        logger.debug(f'Error saving message: {str(e)}')
 
 async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     try:
@@ -120,7 +125,7 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
 
     except Exception as e:
-        logger.error(f"❌ Erro: {str(e)}")
+        logger.error(f"Error generating summary: {str(e)}")
         await update.message.reply_text(f"❌ Erro: {str(e)}")
         
             
