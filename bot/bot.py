@@ -82,10 +82,23 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         
         msgs.reverse()
         
-        prompt_messages = [{
-            "role": "system",
-            "content": "Você analisa conversas e faz resumos concisos focados em: assuntos principais, decisões e próximos passos. Seja amigável."
-        }]
+        prompt_messages = [
+    {
+        "role": "system",
+        "content": (
+            "Você é um assistente especializado em analisar conversas de grupos de amigos "
+            "e criar **resumos curtos, claros e úteis**. "
+            "Seu resumo deve focar em:\n"
+            "1) Quem falou o quê;\n"
+            "2) Principais assuntos mencionados;\n"
+            "3) Decisões tomadas (se houver);\n"
+            "4) Pontos pendentes ou próximos passos.\n\n"
+            "Use um tom amigável e objetivo. "
+            "Se houver imagens, mencione brevemente o conteúdo, sem detalhes excessivos. "
+            "Evite repetir mensagens e não inclua nada irrelevante."
+        )
+    }
+]
         
         for msg in msgs:
             content = []
@@ -110,6 +123,16 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
             if content:
                 prompt_messages.append({"role": "user", "content": content})
+            
+        prompt_messages.append({
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Agora produza um resumo claro, estruturado e amigável das mensagens acima."
+                }
+            ]
+        })           
         
         response = client.chat.completions.create(
             model="gpt-4o-mini",
