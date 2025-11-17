@@ -135,7 +135,9 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
                     content.append({
                         "type": "image_url",
-                        "image_url": f"data:image/jpeg;base64,{clean_b64}"
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{clean_b64}"
+                        }
                     })
                         
                 except Exception as e:
