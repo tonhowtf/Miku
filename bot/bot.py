@@ -68,7 +68,7 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 'user_id': msg.from_user.id,
                 'username': msg.from_user.first_name,
                 'text': msg.text,
-                'photo_url': f"{photo_format}:{photo_base64}" if photo_base64 else None,
+                'photo_url': photo_base64 if photo_base64 else None,
                 'caption': msg.caption
             }
         )
@@ -125,7 +125,7 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
             if msg.photo_url:
                 try:
-                    clean_b64 = msg.photo_url.strip()
+                    clean_b64 = msg.photo_url
         
                     padding = len(clean_b64) % 4
                     if padding:
