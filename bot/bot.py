@@ -47,18 +47,16 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         photo_base64 = None
 
         if msg.photo:
-            photo = msg.photo[-1]
-            file = await context.bot.get_file(photo.file_id)
-            photo_bytes = await file.download_as_bytearray() 
-            
-            img = Image.open(io.BytesIO(photo_bytes))
-            img = img.convert('RGB')
-            
+            photo = await msg.photo[-1].get_file()
+            photo_bytes = await photo.download_as_bytearray()
+
+            img = Image.open(io.BytesIO(photo_bytes)).convert("RGB")
+
             buffer = io.BytesIO()
-            img.save(buffer, format='JPEG')
-            photo_bytes = buffer.getvalue()
-            
-            photo_base64 = base64.b64encode(photo_bytes).decode('utf-8')
+            img.save(buffer, format="JPEG", quality=95, optimize=True)
+            clean_bytes = buffer.getvalue()
+
+            photo_base64 = base64.b64encode(clean_bytes).decode("utf-8")
 
         
         await sync_to_async(ChatMessage.objects.update_or_create)(
