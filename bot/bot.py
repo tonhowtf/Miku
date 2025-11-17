@@ -125,17 +125,8 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
             if msg.photo_url:
                 try:
-                    parts = msg.photo_url.split(':', 1)
-                    if len(parts) == 2:
-                        img_format, clean_b64 = parts
-                    else:
-                        img_format = 'jpeg'
-                        clean_b64 = msg.photo_url
-                    
-                    if img_format == 'jpg':
-                        img_format = 'jpeg'
-
-                    clean_b64 = clean_b64.strip()
+                    clean_b64 = msg.photo_url.strip()
+        
                     padding = len(clean_b64) % 4
                     if padding:
                         clean_b64 += '=' * (4 - padding)
@@ -145,7 +136,7 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     content.append({
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/{img_format};base64,{clean_b64}",
+                            "url": f"data:image/jpeg;base64,{clean_b64}",
                             "detail": "low"
                         }
                     })
