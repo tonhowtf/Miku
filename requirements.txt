@@ -4,3 +4,4 @@ instaloader
 python-dotenv
 asgiref
 whitenoise
+openai
