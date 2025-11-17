@@ -64,8 +64,6 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text('/summary <n_messages>')
         return
     
-    await update.message.reply_text(f'📖 Analisando {k_messages} mensagens...')
-    
     try:
         chat_id = update.effective_chat.id
         
@@ -75,7 +73,6 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
         
         if not msgs:
-            await update.message.reply_text('❌ Nenhuma mensagem no histórico')
             return
         
         msgs.reverse()
@@ -121,8 +118,6 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             f"📝 **Resumo de {len(msgs)} mensagens:**\n\n{summary_text}",
             parse_mode='Markdown'
         )
-        
-        logger.info(f"✅ Resumo gerado")
 
     except Exception as e:
         logger.error(f"❌ Erro: {str(e)}")
