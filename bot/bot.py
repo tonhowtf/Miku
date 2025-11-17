@@ -73,7 +73,7 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 'user_id': msg.from_user.id,
                 'username': msg.from_user.first_name,
                 'text': msg.text,
-                'photo_url': photo_base64,
+                'photo_url': f"{photo_format}:{photo_base64}" if photo_base64 else None,
                 'caption': msg.caption
             }
         )
@@ -147,7 +147,7 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     content.append({
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/jpeg;base64,{clean_b64}",
+                            "url": f"data:image/{img_format};base64,{clean_b64}",
                             "detail": "low"
                         }
                     })
