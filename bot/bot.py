@@ -10,6 +10,7 @@ import logging
 from asgiref.sync import sync_to_async
 import re
 from openai import OpenAI
+import base64
 
 
 load_dotenv()
@@ -45,7 +46,9 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         if msg.photo:
             photo = msg.photo[-1]
             file = await context.bot.get_file(photo.file_id)
-            photo_url = file.file_path
+            
+            photo_bytes = await file.download_as_bytearray()
+            photo_base64 = base64.b64encode(photo_bytes).decode('utf-8')
         
         await sync_to_async(ChatMessage.objects.update_or_create)(
             chat_id=msg.chat_id,
@@ -54,7 +57,7 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 'user_id': msg.from_user.id,
                 'username': msg.from_user.first_name,
                 'text': msg.text,
-                'photo_url': photo_url,
+                'photo_url': photo_base64,
                 'caption': msg.caption
             }
         )
@@ -111,7 +114,7 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
             if msg.photo_url:
                 content.append({
-                    "type": "image_url",
+                    "type": "text",
                     "image_url": {"url": msg.photo_url}
                 })
                 
@@ -143,12 +146,12 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         summary_text = response.choices[0].message.content
         await update.message.reply_text(
-            f"📝 **Resumo de {len(msgs)} mensagens:**\n\n{summary_text}", parse_mode='Markdown'
+            f"mensagens: \n\n{summary_text}", parse_mode='Markdown'
         )
 
     except Exception as e:
         logger.error(f"Error generating summary: {str(e)}")
-        await update.message.reply_text(f"❌ Erro: {str(e)}")
+        await update.message.reply_text(f"Erro: {str(e)}")
         
             
 
