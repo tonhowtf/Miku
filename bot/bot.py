@@ -11,6 +11,8 @@ from asgiref.sync import sync_to_async
 import re
 from openai import OpenAI
 import base64
+import io
+from PIL import Image
 
 
 load_dotenv()
@@ -43,12 +45,26 @@ async def save_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     
     try:
         photo_base64 = None
+        photo_format = None
+
         if msg.photo:
             photo = msg.photo[-1]
             file = await context.bot.get_file(photo.file_id)
+
+            photo_bytes = await file.download_as_bytearray() 
             
-            photo_bytes = await file.download_as_bytearray()
+            img = Image.open(io.BytesIO(photo_bytes))
+            photo_format = img.format.lower()
+
+            if photo_format not in ['png', 'jpeg', 'jpg', 'webp', 'gif']:
+                img = img.convert('RGB')
+                buffer = io.BytesIO()
+                img.save(buffer, format='JPEG')
+                photo_bytes = buffer.getvalue()
+                photo_format = 'jpeg'
+            
             photo_base64 = base64.b64encode(photo_bytes).decode('utf-8')
+
         
         await sync_to_async(ChatMessage.objects.update_or_create)(
             chat_id=msg.chat_id,
@@ -114,8 +130,14 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             
             if msg.photo_url:
                 try:
-                    clean_b64 = msg.photo_url.strip()
+                    parts = msg.photo_url.split(':', 1)
+                    if len(parts) == 2:
+                        img_format, clean_b64 = parts
+                    else:
+                        img_format = 'jpeg'
+                        clean_b64 = msg.photo_url
 
+                    clean_b64 = clean_b64.strip()
                     padding = len(clean_b64) % 4
                     if padding:
                         clean_b64 += '=' * (4 - padding)
